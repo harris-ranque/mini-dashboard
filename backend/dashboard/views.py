@@ -27,8 +27,22 @@ def sales_list(request):
     return Response(serializer.data)
 
 
-@api_view(['POST'])
-def update_target(request):
+@api_view(['GET', 'POST'])
+def target(request):
+    if request.method == 'GET':
+        client_id = _get_client_id(request)
+
+        if not client_id:
+            return Response({'error': 'Client-Id header is required'}, status=400)
+
+        try:
+            target_obj = Target.objects.get(client_id=client_id)
+        except Target.DoesNotExist:
+            return Response({'monthly_goal': None})
+
+        serializer = TargetSerializer(target_obj)
+        return Response(serializer.data)
+
     client_id = request.data.get('client_id')
     monthly_goal = request.data.get('monthly_goal')
 
@@ -37,15 +51,15 @@ def update_target(request):
     if monthly_goal is None:
         return Response({'error': 'monthly_goal is required'}, status=400)
 
-    target, created = Target.objects.get_or_create(
+    target_obj, created = Target.objects.get_or_create(
         client_id=client_id,
         defaults={'monthly_goal': monthly_goal},
     )
 
     if not created:
-        target.monthly_goal = monthly_goal
-        target.save()
+        target_obj.monthly_goal = monthly_goal
+        target_obj.save()
 
-    serializer = TargetSerializer(target)
+    serializer = TargetSerializer(target_obj)
     return Response(serializer.data)
    

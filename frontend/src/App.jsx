@@ -1,5 +1,7 @@
 import { useMemo, useState, useEffect } from 'react'
 import axios from 'axios'
+import TargetProgressChart from './TargetProgressChart'
+import { NotificationContainer, useNotifications } from './Notification'
 import './App.css'
 
 const API_BASE = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000'
@@ -16,9 +18,11 @@ function App() {
   const [clientId, setClientId] = useState('')
   const [sales, setSales] = useState([])
   const [goal, setGoal] = useState('')
+  const [monthlyTarget, setMonthlyTarget] = useState(null)
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const { notifications, notify, dismiss } = useNotifications()
 
   const totalRevenue = useMemo(
     () => sales.reduce((sum, sale) => sum + Number(sale.amount), 0),
@@ -31,8 +35,12 @@ function App() {
 
   useEffect(() => {
     if (!clientId) return
-    fetchSales(clientId)
+    loadClientData(clientId)
   }, [clientId])
+
+  const loadClientData = async (id) => {
+    await Promise.all([fetchSales(id), fetchTarget(id)])
+  }
 
   const fetchClients = async () => {
     try {
@@ -44,6 +52,22 @@ function App() {
     } catch (err) {
       console.error(err)
       setError('Could not load clients. Is the API running?')
+    }
+  }
+
+  const fetchTarget = async (id) => {
+    try {
+      const response = await axios.get(`${API_BASE}/api/target/`, {
+        headers: {
+          'Client-Id': String(id),
+        },
+      })
+      const value = response.data.monthly_goal
+      setMonthlyTarget(value != null ? Number(value) : null)
+      setGoal(value != null ? String(value) : '')
+    } catch (err) {
+      console.error(err)
+      setMonthlyTarget(null)
     }
   }
 
@@ -71,20 +95,24 @@ function App() {
 
     try {
       setSaving(true)
-      await axios.post(`${API_BASE}/api/target/`, {
+      const response = await axios.post(`${API_BASE}/api/target/`, {
         client_id: Number(clientId),
         monthly_goal: goal,
       })
-      alert('Target updated!')
+      const value = response.data.monthly_goal
+      setMonthlyTarget(value != null ? Number(value) : null)
+      setGoal(value != null ? String(value) : '')
+      notify('Target updated successfully.', 'success')
     } catch (err) {
       console.error(err)
-      alert('Failed to update target.')
+      notify('Failed to update target. Please try again.', 'error')
     } finally {
       setSaving(false)
     }
   }
 
   return (
+    <>
     <div className="dashboard">
       <header className="dashboard__header">
         <div>
@@ -104,6 +132,7 @@ function App() {
             onChange={(e) => {
               setClientId(e.target.value)
               setGoal('')
+              setMonthlyTarget(null)
             }}
             disabled={clients.length === 0}
           >
@@ -126,6 +155,14 @@ function App() {
           <p className="stat-card__value">
             {loading ? '—' : formatCurrency(totalRevenue)}
           </p>
+        </article>
+        <article className="stat-card stat-card--chart">
+          <p className="stat-card__label">Target progress</p>
+          <TargetProgressChart
+            revenue={totalRevenue}
+            target={monthlyTarget}
+            loading={loading}
+          />
         </article>
         <article className="stat-card">
           <p className="stat-card__label">Sales records</p>
@@ -223,6 +260,8 @@ function App() {
         </form>
       </section>
     </div>
+    <NotificationContainer notifications={notifications} onDismiss={dismiss} />
+    </>
   )
 }
 

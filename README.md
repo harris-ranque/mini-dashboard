@@ -137,6 +137,7 @@ Base URL: `http://127.0.0.1:8000/api/`
 | ------ | ----------- | ------------------------------------ |
 | GET    | `/clients/` | List all clients (`id`, `name`)    |
 | GET    | `/sales/`   | Sales for a client (header required) |
+| GET    | `/target/`  | Monthly target for a client (header) |
 | POST   | `/target/`  | Create or update monthly target      |
 
 ### Examples
@@ -147,6 +148,9 @@ curl http://127.0.0.1:8000/api/clients/
 
 # Sales for client 1
 curl -H "Client-Id: 1" http://127.0.0.1:8000/api/sales/
+
+# Target for client 1
+curl -H "Client-Id: 1" http://127.0.0.1:8000/api/target/
 
 # Update target
 curl -X POST http://127.0.0.1:8000/api/target/ \
