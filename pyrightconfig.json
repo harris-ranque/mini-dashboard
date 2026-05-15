@@ -1,5 +1,14 @@
 {
   "venvPath": "backend",
   "venv": ".venv",
-  "include": ["backend"]
+  "include": ["backend"],
+  "djangoSettingsModule": "config.settings",
+  "plugins": [
+    {
+      "module": "mypy_django_plugin.main",
+      "options": {
+        "django_settings_module": "config.settings"
+      }
+    }
+  ]
 }

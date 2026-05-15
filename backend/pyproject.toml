@@ -11,4 +11,18 @@ dependencies = [
     "gunicorn>=26.0.0",
     "psycopg2-binary>=2.9.12",
     "python-dotenv>=1.2.2",
+    "whitenoise>=6.9.0",
 ]
+
+[dependency-groups]
+dev = [
+    "django-stubs>=5.2.0",
+    "djangorestframework-stubs>=3.16.0",
+]
+
+[tool.django-stubs]
+django_settings_module = "config.settings"
+
+[tool.basedpyright]
+djangoSettingsModule = "config.settings"
+plugins = ["mypy_django_plugin.main"]
