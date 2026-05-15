@@ -1,10 +1,8 @@
 import { useMemo, useState, useEffect } from 'react'
-import axios from 'axios'
+import { api } from './api'
 import TargetProgressChart from './TargetProgressChart'
 import { NotificationContainer, useNotifications } from './Notification'
 import './App.css'
-
-const API_BASE = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000'
 
 function formatCurrency(value) {
   return new Intl.NumberFormat('en-US', {
@@ -44,7 +42,7 @@ function App() {
 
   const fetchClients = async () => {
     try {
-      const response = await axios.get(`${API_BASE}/api/clients/`)
+      const response = await api.get('/api/clients/')
       setClients(response.data)
       if (response.data.length > 0) {
         setClientId(String(response.data[0].id))
@@ -57,7 +55,7 @@ function App() {
 
   const fetchTarget = async (id) => {
     try {
-      const response = await axios.get(`${API_BASE}/api/target/`, {
+      const response = await api.get('/api/target/', {
         headers: {
           'Client-Id': String(id),
         },
@@ -75,7 +73,7 @@ function App() {
     try {
       setLoading(true)
       setError(null)
-      const response = await axios.get(`${API_BASE}/api/sales/`, {
+      const response = await api.get('/api/sales/', {
         headers: {
           'Client-Id': String(id),
         },
@@ -95,7 +93,7 @@ function App() {
 
     try {
       setSaving(true)
-      const response = await axios.post(`${API_BASE}/api/target/`, {
+      const response = await api.post('/api/target/', {
         client_id: Number(clientId),
         monthly_goal: goal,
       })
