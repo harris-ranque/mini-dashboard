@@ -2,7 +2,13 @@
 
 from rest_framework import serializers
 
-from .models import Sales, Target
+from .models import Client, Sales, Target
+
+
+class ClientSerializer(serializers.ModelSerializer[Client]):
+    class Meta:
+        model = Client
+        fields = ['id', 'name']
 
 
 class SalesSerializer(serializers.ModelSerializer[Sales]):
