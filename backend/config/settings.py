@@ -28,11 +28,42 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-change-me')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'True').lower() in ('true', '1', 'yes')
 
-ALLOWED_HOSTS = [
+_allowed_hosts = [
     host.strip()
     for host in os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
     if host.strip()
 ]
+
+_extra_hosts = [
+    host.strip()
+    for host in os.getenv('EXTRA_ALLOWED_HOSTS', '').split(',')
+    if host.strip()
+]
+
+# Leading dot allows all subdomains (e.g. *.ngrok-free.dev).
+_ngrok_host_suffixes = [
+    '.ngrok-free.dev',
+    '.ngrok.io',
+    '.ngrok.app',
+]
+
+ALLOWED_HOSTS = list(dict.fromkeys(_allowed_hosts + _extra_hosts + _ngrok_host_suffixes))
+
+_csrf_origins = [
+    origin.strip()
+    for origin in os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',')
+    if origin.strip()
+]
+if DEBUG:
+    _csrf_origins.extend(
+        [
+            'http://localhost:5173',
+            'http://127.0.0.1:5173',
+            'http://localhost:3000',
+            'http://127.0.0.1:3000',
+        ]
+    )
+CSRF_TRUSTED_ORIGINS = list(dict.fromkeys(_csrf_origins))
 
 
 # Application definition
@@ -136,15 +167,31 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 from corsheaders.defaults import default_headers
 
-CORS_ALLOWED_ORIGINS = [
+_cors_origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+]
+_cors_origins.extend(
+    origin.strip()
+    for origin in os.getenv('CORS_ALLOWED_ORIGINS', '').split(',')
+    if origin.strip()
+)
+CORS_ALLOWED_ORIGINS = list(dict.fromkeys(_cors_origins))
+
+# Allow frontend dev servers tunneled through ngrok (https).
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r'^https://[a-z0-9-]+\.ngrok-free\.dev$',
+    r'^https://[a-z0-9-]+\.ngrok\.io$',
+    r'^https://[a-z0-9-]+\.ngrok\.app$',
+    r'^https://[a-z0-9-]+-[a-z0-9-]+\.vercel\.app$',
+    r'^https://[a-z0-9-]+\.vercel\.app$',
 ]
 
 CORS_ALLOW_HEADERS = (
     *default_headers,
     "client-id",
     "Client-Id",
+    "ngrok-skip-browser-warning",
 )
